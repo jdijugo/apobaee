@@ -1,0 +1,14 @@
+Options -MultiViews -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Menangkap berdasarkan URI yang diminta, bukan path sistem
+    # [NC] = No Case (mengizinkan .HTML atau .html)
+    RewriteCond %{REQUEST_URI} \.(xml|htm|html)$ [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/robots(\.txt)?$ [NC]
+    
+    # Lemparkan semua yang cocok dengan kondisi di atas ke index.php
+    RewriteRule ^(.*)$ /index.php [L]
+</IfModule>
